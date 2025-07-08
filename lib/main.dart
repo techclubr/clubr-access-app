@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'DM Sans',
         textTheme: TextTheme(
           headlineLarge: TextStyle(fontWeight: FontWeight.bold),
-          bodyMedium: TextStyle(fontSize: 16),
+          // bodyMedium: TextStyle(fontSize: 16),
         ),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
       ),

@@ -203,6 +203,16 @@ class _ScanningScreenState extends State<ScanningScreen>
     final scanTop = (size.height - scanAreaSize) / 2;
 
     return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Image.asset(
+          "assets/icons/header-logo.png",
+          fit: BoxFit.cover,
+          height: 36,
+        ),
+        backgroundColor: Colors.black,
+      ),
       body: Stack(
         children: [
           MobileScanner(controller: _controller, onDetect: _handleBarcode),

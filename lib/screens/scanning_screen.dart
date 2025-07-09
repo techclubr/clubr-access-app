@@ -1,7 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:qrzone/controllers/admin_bottom_sheet_controller.dart';
 import 'package:qrzone/controllers/bottom_sheet_controller.dart';
+import 'package:qrzone/widgets/admin_bottom_sheet.dart';
 import 'package:qrzone/widgets/bottom_sheet.dart';
 
 class ScanningScreen extends StatefulWidget {
@@ -17,6 +22,9 @@ class _ScanningScreenState extends State<ScanningScreen>
 
   final BottomSheetController _bottomSheetController = Get.put(
     BottomSheetController(),
+  );
+  final AdminBottomSheetController _adminBottomSheetController = Get.put(
+    AdminBottomSheetController(),
   );
 
   Barcode? _barcode;
@@ -57,41 +65,122 @@ class _ScanningScreenState extends State<ScanningScreen>
   void _handleBarcode(BarcodeCapture barcodes) async {
     if (!mounted) return;
 
-    final barcode = barcodes.barcodes.firstOrNull;
-    if (barcode != null && barcode.displayValue != null) {
-      // Prevent showing the bottom sheet for the same scan
-      if (_lastScannedValue != barcode.displayValue) {
-        setState(() {
-          _barcode = barcode;
-          _lastScannedValue = barcode.displayValue;
-        });
+    try {
+      final barcode = barcodes.barcodes.firstOrNull;
+      if (barcode != null && barcode.displayValue != null) {
+        // Prevent showing the bottom sheet for the same scan
+        if (_lastScannedValue != barcode.displayValue) {
+          setState(() {
+            _barcode = barcode;
+            _lastScannedValue = barcode.displayValue;
+          });
 
-        // Stop the camera before showing the bottom sheet
-        await _controller.stop();
-        // Stop the animation
-        _animationController.stop();
+          // Stop the camera before showing the bottom sheet
+          await _controller.stop();
+          // Stop the animation
+          _animationController.stop();
 
-        if (!mounted) return;
+          if (!mounted) return;
+          if (_lastScannedValue == null) {
+            Fluttertoast.showToast(
+              msg: 'No QR code data found',
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+            );
+          }
+          String cleanContent = _lastScannedValue!.trim();
+          if (cleanContent.startsWith('"') && cleanContent.endsWith('"')) {
+            cleanContent = cleanContent.substring(1, cleanContent.length - 1);
+          }
+          final parts = cleanContent.split('-');
+          print('Split parts: $parts');
+          if (parts.length == 2 &&
+              parts[0].isNotEmpty &&
+              int.tryParse(parts[1]) != null) {
+            final orderId = parts[0];
+            final personNo = int.parse(parts[1]);
 
-        _bottomSheetController.initializeWithContent(_lastScannedValue);
-        // Show the bottom sheet with the scanned value
-        await showModalBottomSheet<bool>(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder:
-              (context) =>
-                  BottomSheetWidget(content: _lastScannedValue, show: true),
-        );
+            print(personNo);
+            print(personNo.runtimeType);
 
-        setState(() {
-          _lastScannedValue = null;
-        });
-        // Restart the camera when the bottom sheet is closed
-        _controller.start();
-        // Restart the animation
-        _animationController.repeat(reverse: true);
+            if (personNo == 0) {
+              _adminBottomSheetController.orderId.value = parts[0];
+              _adminBottomSheetController.personNo.value = int.parse(parts[1]);
+
+              log("fetching admin person data");
+
+              await _adminBottomSheetController.initializeWithContent();
+              // Show the bottom sheet with the scanned value
+              await showModalBottomSheet<bool>(
+                context: context,
+                backgroundColor: Colors.white,
+                barrierColor: Colors.black87,
+                showDragHandle: true,
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.9,
+                  minWidth: MediaQuery.of(context).size.width * 0.9,
+                ),
+                builder:
+                    (context) => AdminBottomSheetWidget(
+                      content: _lastScannedValue,
+                      show: true,
+                    ),
+              );
+
+              setState(() {
+                _lastScannedValue = null;
+              });
+              // Restart the camera when the bottom sheet is closed
+              _controller.start();
+              // Restart the animation
+              _animationController.repeat(reverse: true);
+            } else {
+              log("fetching user person data");
+              _bottomSheetController.orderId.value = parts[0];
+              _bottomSheetController.personNo.value = int.parse(parts[1]);
+
+              _bottomSheetController.initializeWithContent();
+              // Show the bottom sheet with the scanned value
+              // Show the bottom sheet with the scanned value
+              await showModalBottomSheet<bool>(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder:
+                    (context) => BottomSheetWidget(
+                      content: _lastScannedValue,
+                      show: true,
+                    ),
+              );
+
+              setState(() {
+                _lastScannedValue = null;
+              });
+              // Restart the camera when the bottom sheet is closed
+              _controller.start();
+              // Restart the animation
+              _animationController.repeat(reverse: true);
+            }
+          } else {
+            Fluttertoast.showToast(
+              msg: 'Invalid QR code format. Expected "order_id-person_no".',
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+            );
+          }
+        }
       }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: 'Error processing QR code: $e',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     }
   }
 

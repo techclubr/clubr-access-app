@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:qrzone/screens/scanning_screen.dart';
 
 class HomeScreen extends StatefulWidget {

@@ -1,10 +1,11 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
 
-class BottomSheetController extends GetxController {
+class AdminBottomSheetController extends GetxController {
   // Observables for reactive UI updates
   var isLoading = true.obs;
   var personData = Rx<Map<String, dynamic>?>(null);
@@ -35,13 +36,14 @@ class BottomSheetController extends GetxController {
   }
 
   // Method to initialize data based on content
-  void initializeWithContent() {
-    fetchPersonData(orderId.value!, personNo.value!.toString());
+  Future<void> initializeWithContent() async {
+    await fetchAdminPersonData(orderId.value!, personNo.value!.toString());
   }
 
-  Future<void> fetchPersonData(String id, String count) async {
+  Future<void> fetchAdminPersonData(String id, String count) async {
     try {
       isLoading.value = true;
+      log("Loading started");
 
       final Map<String, String> headers = {
         'Content-Type': 'application/json',
@@ -54,6 +56,9 @@ class BottomSheetController extends GetxController {
         headers: headers,
       );
 
+      print(response.statusCode);
+      print(response.body);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         final result = jsonDecode(response.body);
         final coverData = result['data']?[0];
@@ -62,37 +67,30 @@ class BottomSheetController extends GetxController {
                 ? int.parse(coverData['table_no'].toString())
                 : null;
 
-        if (coverData?['person_wise_details'] != null) {
-          final parsed = jsonDecode(coverData['person_wise_details']) as List;
-          final found = parsed.firstWhere(
-            (p) => p['person_no'] == int.parse(count),
-            orElse: () => null,
-          );
+        final found = {"person_no": int.parse(count)};
 
-          if (found != null) {
-            found['pending_amount'] =
-                (found['cover_charges'] ?? 0) -
-                (found['redeemed_cover_charges'] ?? 0);
-            found['pending_drinks'] =
-                (found['free_drinks'] ?? 0) -
-                (found['redeemed_free_drinks'] ?? 0);
-            personData.value = found;
-          } else {
-            personData.value = null;
-          }
-        } else {
-          personData.value = null;
-        }
+        found['total_cover_charges'] = coverData['total_cover_charges'] ?? 0;
+
+        found['balanceAmount'] =
+            (coverData['total_cover_charges'] ?? 0) -
+            (coverData['total_amount_redeemed'] ?? 0);
+
+        found['total_free_drinks'] = coverData['total_free_drinks'] ?? 0;
+
+        found['pendingDrinks'] =
+            (coverData['total_free_drinks'] ?? 0) -
+            (coverData['redeemed_free_drinks'] ?? 0);
+        personData.value = found;
       } else {
-        print(response.statusCode);
-        print(response.body);
         personData.value = null;
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
       print('Error fetching cover-details: $error');
+      print('Stack trace: $stackTrace');
       personData.value = null;
     } finally {
       isLoading.value = false;
+      log("Loading completed");
     }
   }
 
@@ -114,14 +112,32 @@ class BottomSheetController extends GetxController {
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        Fluttertoast.showToast(
-          msg: '$type Successfully!',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
+        final billingCode = data['data']['billing_code'];
+
+        // Fluttertoast.showToast(
+        //   msg: '$type Successfully!',
+        //   toastLength: Toast.LENGTH_SHORT,
+        //   gravity: ToastGravity.BOTTOM,
+        //   backgroundColor: Colors.green,
+        //   textColor: Colors.white,
+        // );
+
+        Get.dialog(
+          AlertDialog(
+            title: Text('$billingCode'),
+            content: Text('$type Successfully!'),
+            actions: [
+              FilledButton(
+                onPressed: () => Get.back(),
+                child: Text(
+                  "Done",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
         );
-        fetchPersonData(
+        fetchAdminPersonData(
           orderId.value!,
           personNo.value!.toString(),
         ); // Re-fetch data to update UI
@@ -185,7 +201,7 @@ class BottomSheetController extends GetxController {
         int.parse(redeemAmount.value) > 0 &&
         personData.value != null && // Ensure personData is not null
         int.parse(redeemAmount.value) <=
-            (personData.value!['pending_amount'] ?? 0);
+            (personData.value!['balanceAmount'] ?? 0);
   }
 
   String? get redeemAmountErrorText {
@@ -193,8 +209,8 @@ class BottomSheetController extends GetxController {
         int.tryParse(redeemAmount.value) != null &&
         personData.value != null &&
         int.parse(redeemAmount.value) >
-            (personData.value!['pending_amount'] ?? 0)) {
-      return 'Amount cannot be greater than ₹${personData.value!['pending_amount']}';
+            (personData.value!['balanceAmount'] ?? 0)) {
+      return 'Amount cannot be greater than ₹${personData.value!['balanceAmount']}';
     }
     return null;
   }
@@ -205,7 +221,7 @@ class BottomSheetController extends GetxController {
         int.parse(redeemFreeDrinkAmount.value) > 0 &&
         personData.value != null && // Ensure personData is not null
         int.parse(redeemFreeDrinkAmount.value) <=
-            (personData.value!['pending_drinks'] ?? 0);
+            (personData.value!['pendingDrinks'] ?? 0);
   }
 
   String? get redeemFreeDrinkAmountErrorText {
@@ -213,8 +229,8 @@ class BottomSheetController extends GetxController {
         int.tryParse(redeemFreeDrinkAmount.value) != null &&
         personData.value != null &&
         int.parse(redeemFreeDrinkAmount.value) >
-            (personData.value!['pending_drinks'] ?? 0)) {
-      return 'Cannot redeem more than ${personData.value!['pending_drinks']} drinks';
+            (personData.value!['pendingDrinks'] ?? 0)) {
+      return 'Cannot redeem more than ${personData.value!['pendingDrinks']} drinks';
     }
     return null;
   }

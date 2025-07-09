@@ -1,4 +1,4 @@
-package com.clubr.qrzone
+package com.clubr.cover_access
 
 import io.flutter.embedding.android.FlutterActivity
 

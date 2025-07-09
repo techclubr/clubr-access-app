@@ -142,11 +142,16 @@ class _ScanningScreenState extends State<ScanningScreen>
               _bottomSheetController.personNo.value = int.parse(parts[1]);
 
               _bottomSheetController.initializeWithContent();
-              // Show the bottom sheet with the scanned value
-              // Show the bottom sheet with the scanned value
+
               await showModalBottomSheet<bool>(
                 context: context,
-                backgroundColor: Colors.transparent,
+                backgroundColor: Colors.white,
+                barrierColor: Colors.black87,
+                showDragHandle: true,
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.9,
+                  minWidth: MediaQuery.of(context).size.width * 0.9,
+                ),
                 builder:
                     (context) => BottomSheetWidget(
                       content: _lastScannedValue,

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:qrzone/colors.dart';
 import 'package:qrzone/controllers/admin_bottom_sheet_controller.dart';
+import 'package:qrzone/screens/redeem_statements_screen.dart';
 
 class AdminBottomSheetWidget extends StatefulWidget {
   final String? content;
@@ -224,6 +226,23 @@ class _AdminBottomSheetWidgetState extends State<AdminBottomSheetWidget> {
               }),
             ),
           ),
+          TextButton(
+            onPressed: () {
+              Get.to(() => RedeemStatementsScreen(orderId: adminSheetController.orderId.value!));
+            },
+            child: const Text(
+              "More info →",
+              // "Redeem Statements →",
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+                decoration: TextDecoration.underline,
+                decorationColor: Colors.grey,
+              ),
+            ),
+          ),
+          SizedBox(height: 8),
         ],
       ),
     );

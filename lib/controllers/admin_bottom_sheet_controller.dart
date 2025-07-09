@@ -124,7 +124,20 @@ class AdminBottomSheetController extends GetxController {
 
         Get.dialog(
           AlertDialog(
-            title: Text('$billingCode'),
+            title: Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(
+                    text: 'ID: ',
+                    style: TextStyle(fontWeight: FontWeight.normal),
+                  ),
+                  TextSpan(
+                    text: billingCode,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
             content: Text('$type Successfully!'),
             actions: [
               FilledButton(

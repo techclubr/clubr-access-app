@@ -114,12 +114,42 @@ class BottomSheetController extends GetxController {
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        Fluttertoast.showToast(
-          msg: '$type Successfully!',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
+        final billingCode = data['data']['billing_code'];
+        // Fluttertoast.showToast(
+        //   msg: '$type Successfully!',
+        //   toastLength: Toast.LENGTH_SHORT,
+        //   gravity: ToastGravity.BOTTOM,
+        //   backgroundColor: Colors.green,
+        //   textColor: Colors.white,
+        // );
+
+        Get.dialog(
+          AlertDialog(
+            title: Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(
+                    text: 'ID: ',
+                    style: TextStyle(fontWeight: FontWeight.normal),
+                  ),
+                  TextSpan(
+                    text: billingCode,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            content: Text('$type Successfully!'),
+            actions: [
+              FilledButton(
+                onPressed: () => Get.back(),
+                child: Text(
+                  "Done",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
         );
         fetchPersonData(
           orderId.value!,

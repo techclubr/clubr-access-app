@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:qrzone/screens/home_screen.dart';
+import 'package:qrzone/bindings/network_binding.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -48,6 +50,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const HomeScreen(),
+      initialBinding: NetworkBinding(),
     );
   }
 }

@@ -18,7 +18,9 @@ class ScanningScreen extends StatefulWidget {
 
 class _ScanningScreenState extends State<ScanningScreen>
     with SingleTickerProviderStateMixin {
-  final MobileScannerController _controller = MobileScannerController();
+  final MobileScannerController _controller = MobileScannerController(
+    torchEnabled: true,
+  );
 
   final BottomSheetController _bottomSheetController = Get.put(
     BottomSheetController(),
@@ -168,13 +170,28 @@ class _ScanningScreenState extends State<ScanningScreen>
               _animationController.repeat(reverse: true);
             }
           } else {
-            Fluttertoast.showToast(
-              msg: 'Invalid QR code format. Expected "order_id-person_no".',
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.BOTTOM,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
+            await showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (BuildContext dialogContext) {
+                return AlertDialog(
+                  title: const Text('Invalid QR Code'),
+                  content: const Text('This QR code is not valid.'),
+                  actions: <Widget>[
+                    FilledButton(
+                      child: const Text('OK'),
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
             );
+
+            _controller.start();
+            _animationController.repeat(reverse: true);
+            _lastScannedValue = null;
           }
         }
       }

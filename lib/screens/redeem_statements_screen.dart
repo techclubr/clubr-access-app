@@ -28,7 +28,13 @@ class _RedeemStatementsScreenState extends State<RedeemStatementsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Redeem Statements"),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Redeem Statements", style: TextStyle(fontSize: 15)),
+            Text("ID: ${widget.orderId}"),
+          ],
+        ),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),

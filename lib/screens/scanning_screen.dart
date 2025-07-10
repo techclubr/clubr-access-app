@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:qrzone/controllers/admin_bottom_sheet_controller.dart';
 import 'package:qrzone/controllers/bottom_sheet_controller.dart';
-import 'package:qrzone/widgets/admin_bottom_sheet.dart';
 import 'package:qrzone/widgets/bottom_sheet.dart';
 
 class ScanningScreen extends StatefulWidget {
@@ -22,15 +20,17 @@ class _ScanningScreenState extends State<ScanningScreen>
     torchEnabled: true,
   );
 
+  // Use a single BottomSheetController now
   final BottomSheetController _bottomSheetController = Get.put(
     BottomSheetController(),
   );
-  final AdminBottomSheetController _adminBottomSheetController = Get.put(
-    AdminBottomSheetController(),
-  );
+  // final AdminBottomSheetController _adminBottomSheetController = Get.put(
+  //   AdminBottomSheetController(),
+  // ); // REMOVE
 
   Barcode? _barcode;
   String? _lastScannedValue;
+  bool _isProcessingBarcode = false; // Add a flag to prevent multiple triggers
 
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -65,7 +65,9 @@ class _ScanningScreenState extends State<ScanningScreen>
   }
 
   void _handleBarcode(BarcodeCapture barcodes) async {
-    if (!mounted) return;
+    if (!mounted || _isProcessingBarcode) return; // Prevent re-entry
+
+    _isProcessingBarcode = true; // Set flag to true
 
     try {
       final barcode = barcodes.barcodes.firstOrNull;
@@ -77,12 +79,16 @@ class _ScanningScreenState extends State<ScanningScreen>
             _lastScannedValue = barcode.displayValue;
           });
 
-          // Stop the camera before showing the bottom sheet
+          // Stop the camera before showing any UI
           await _controller.stop();
           // Stop the animation
           _animationController.stop();
 
-          if (!mounted) return;
+          if (!mounted) {
+            _isProcessingBarcode = false; // Reset flag
+            return;
+          }
+
           if (_lastScannedValue == null) {
             Fluttertoast.showToast(
               msg: 'No QR code data found',
@@ -91,13 +97,20 @@ class _ScanningScreenState extends State<ScanningScreen>
               backgroundColor: Colors.red,
               textColor: Colors.white,
             );
+            _isProcessingBarcode = false; // Reset flag
+            _controller.start(); // Restart camera
+            _animationController.repeat(reverse: true); // Restart animation
+            return;
           }
+
           String cleanContent = _lastScannedValue!.trim();
           if (cleanContent.startsWith('"') && cleanContent.endsWith('"')) {
             cleanContent = cleanContent.substring(1, cleanContent.length - 1);
           }
+
           final parts = cleanContent.split('-');
           print('Split parts: $parts');
+
           if (parts.length == 2 &&
               parts[0].isNotEmpty &&
               int.tryParse(parts[1]) != null) {
@@ -107,76 +120,49 @@ class _ScanningScreenState extends State<ScanningScreen>
             print(personNo);
             print(personNo.runtimeType);
 
-            if (personNo == 0) {
-              _adminBottomSheetController.orderId.value = parts[0];
-              _adminBottomSheetController.personNo.value = int.parse(parts[1]);
+            // Set the orderId and personNo in the single controller
+            _bottomSheetController.orderId.value = orderId;
+            _bottomSheetController.personNo.value = personNo;
 
-              log("fetching admin person data");
+            log("fetching data for person: $personNo");
 
-              await _adminBottomSheetController.initializeWithContent();
-              // Show the bottom sheet with the scanned value
-              await showModalBottomSheet<bool>(
-                context: context,
-                backgroundColor: Colors.white,
-                barrierColor: Colors.black87,
-                showDragHandle: true,
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.9,
-                  minWidth: MediaQuery.of(context).size.width * 0.9,
-                ),
-                builder:
-                    (context) => AdminBottomSheetWidget(
-                      content: _lastScannedValue,
-                      show: true,
-                    ),
-              );
+            await _bottomSheetController.initializeWithContent();
 
-              setState(() {
-                _lastScannedValue = null;
-              });
-              // Restart the camera when the bottom sheet is closed
-              _controller.start();
-              // Restart the animation
-              _animationController.repeat(reverse: true);
-            } else {
-              log("fetching user person data");
-              _bottomSheetController.orderId.value = parts[0];
-              _bottomSheetController.personNo.value = int.parse(parts[1]);
+            await showModalBottomSheet<bool>(
+              context: context,
+              backgroundColor: Colors.white,
+              barrierColor: Colors.black87,
+              showDragHandle: true,
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.9,
+                minWidth: MediaQuery.of(context).size.width * 0.9,
+              ),
+              builder:
+                  (context) => BottomSheetWidget(
+                    // Always use BottomSheetWidget
+                    content: _lastScannedValue,
+                    show: true,
+                  ),
+            );
 
-              _bottomSheetController.initializeWithContent();
-
-              await showModalBottomSheet<bool>(
-                context: context,
-                backgroundColor: Colors.white,
-                barrierColor: Colors.black87,
-                showDragHandle: true,
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.9,
-                  minWidth: MediaQuery.of(context).size.width * 0.9,
-                ),
-                builder:
-                    (context) => BottomSheetWidget(
-                      content: _lastScannedValue,
-                      show: true,
-                    ),
-              );
-
-              setState(() {
-                _lastScannedValue = null;
-              });
-              // Restart the camera when the bottom sheet is closed
-              _controller.start();
-              // Restart the animation
-              _animationController.repeat(reverse: true);
-            }
+            setState(() {
+              _lastScannedValue = null;
+            });
+            // Restart the camera when the bottom sheet is closed
+            _controller.start();
+            // Restart the animation
+            _animationController.repeat(reverse: true);
           } else {
-            await showDialog(
+            // Invalid QR code format: Show popup, stop camera and animation
+            await showDialog<void>(
               context: context,
               barrierDismissible: false,
               builder: (BuildContext dialogContext) {
                 return AlertDialog(
                   title: const Text('Invalid QR Code'),
-                  content: const Text('This QR code is not valid.'),
+                  content: const Text(
+                    'This QR code is not valid. Please scan a valid Clubr QR code.',
+                  ),
                   actions: <Widget>[
                     FilledButton(
                       child: const Text('OK'),
@@ -203,6 +189,10 @@ class _ScanningScreenState extends State<ScanningScreen>
         backgroundColor: Colors.red,
         textColor: Colors.white,
       );
+      _controller.start(); // Restart camera even on error
+      _animationController.repeat(reverse: true); // Restart animation on error
+    } finally {
+      _isProcessingBarcode = false; // Reset flag in finally block
     }
   }
 
@@ -263,20 +253,6 @@ class _ScanningScreenState extends State<ScanningScreen>
               );
             },
           ),
-          // Align(
-          //   alignment: Alignment.bottomCenter,
-          //   child: Container(
-          //     alignment: Alignment.bottomCenter,
-          //     height: 100,
-          //     color: const Color.fromRGBO(0, 0, 0, 0.4),
-          //     child: Row(
-          //       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          //       children: [
-          //         Expanded(child: Center(child: _barcodePreview(_barcode))),
-          //       ],
-          //     ),
-          //   ),
-          // ),
         ],
       ),
     );

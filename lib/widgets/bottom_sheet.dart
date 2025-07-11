@@ -19,19 +19,19 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.show) return const SizedBox.shrink();
+    // if (!widget.show) return const SizedBox.shrink();
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: SingleChildScrollView(
-              child: Obx(() {
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Obx(() {
                 if (controller.isLoading.value) {
                   return const Center(
                     child: Text(
@@ -46,6 +46,51 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text.rich(
+                              TextSpan(
+                                children: [
+                                  const TextSpan(
+                                    text: "Table No: ",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: controller.tableNo.value ?? 'N/A',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight:
+                                          FontWeight
+                                              .bold, // Make "Table No:" bold
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              "ID: ${controller.orderId.value ?? 'N/A'}",
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(
+                        height: 18,
+                        thickness: 0.1,
+                        color: Colors.grey,
+                      ),
                       // if (controller.tableNo.value != null &&
                       //     controller.tableNo.value != 0) ...[
                       // Text(
@@ -258,6 +303,30 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
                                   controller.handleRedeemFreeDrinks,
                             ),
                       ],
+
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            Get.to(
+                              () => RedeemStatementsScreen(
+                                orderId:
+                                    controller.orderId.value ??
+                                    "Unknown Order ID",
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            "More info→",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   );
                 } else {
@@ -269,61 +338,11 @@ class _BottomSheetWidgetState extends State<BottomSheetWidget> {
                   );
                 }
               }),
-            ),
-          ),
-          Divider(),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Table No: ${controller.tableNo.value ?? 'N/A'}",
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    Text(
-                      "ID: ${controller.orderId.value ?? 'N/A'}",
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Get.to(
-                    () => RedeemStatementsScreen(
-                      orderId: controller.orderId.value ?? "Unknown Order ID",
-                    ),
-                  );
-                },
-                child: const Text(
-                  "More info →",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey,
-                    decoration: TextDecoration.underline,
-                    decorationColor: Colors.grey,
-                  ),
-                ),
-              ),
+              SizedBox(height: 8),
             ],
           ),
-          SizedBox(height: 8),
-        ],
+        ),
       ),
     );
   }

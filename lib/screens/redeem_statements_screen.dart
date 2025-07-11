@@ -27,6 +27,7 @@ class _RedeemStatementsScreenState extends State<RedeemStatementsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,27 +57,16 @@ class _RedeemStatementsScreenState extends State<RedeemStatementsScreen> {
           itemBuilder: (context, index) {
             final item = controller.statements[index];
             return Card(
-              elevation: 2, // Subtle elevation for a clean look
+              color: Colors.white,
+              elevation: 2,
               margin: const EdgeInsets.symmetric(vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  10,
-                ), // Gentle rounded corners
-                side: BorderSide(
-                  color: Colors.grey.shade200,
-                  width: 0.8,
-                ), // Very thin, light border
-              ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start, // Align content to the start
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top Row: Code and Date/Time
                     Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween, // Distribute space
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
@@ -84,17 +74,14 @@ class _RedeemStatementsScreenState extends State<RedeemStatementsScreen> {
                           child: Text(
                             "Code: ${item.uniqueCode}",
                             style: const TextStyle(
-                              // Using default TextStyle
-                              fontWeight:
-                                  FontWeight.w600, // Semi-bold for prominence
+                              fontWeight: FontWeight.w600,
                               fontSize: 16,
                               color: Colors.black87,
                             ),
-                            overflow:
-                                TextOverflow.ellipsis, // Handle long codes
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8), // Space between code and date
+                        const SizedBox(width: 8),
                         Column(
                           // Date and Time stacked
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -134,47 +121,48 @@ class _RedeemStatementsScreenState extends State<RedeemStatementsScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              "Cover Charges",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade700,
+                            if (item.redeemedCoverCharges > 0)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Cover Charges",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "₹${item.redeemedCoverCharges}",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 22,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "₹${item.redeemedCoverCharges}",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color:
-                                    Colors
-                                        .green
-                                        .shade700, // Emphasize monetary value
+                            if (item.redeemedFreeDrinks > 0)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    "Free Drinks",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "${item.redeemedFreeDrinks}",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 22,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              "Free Drinks",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade700,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "${item.redeemedFreeDrinks}",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color:
-                                    Colors.blue.shade700, // Emphasize quantity
-                              ),
-                            ),
                           ],
                         ),
                       ],

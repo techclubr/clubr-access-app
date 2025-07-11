@@ -24,9 +24,6 @@ class _ScanningScreenState extends State<ScanningScreen>
   final BottomSheetController _bottomSheetController = Get.put(
     BottomSheetController(),
   );
-  // final AdminBottomSheetController _adminBottomSheetController = Get.put(
-  //   AdminBottomSheetController(),
-  // ); // REMOVE
 
   Barcode? _barcode;
   String? _lastScannedValue;
@@ -67,7 +64,10 @@ class _ScanningScreenState extends State<ScanningScreen>
   void _handleBarcode(BarcodeCapture barcodes) async {
     if (!mounted || _isProcessingBarcode) return; // Prevent re-entry
 
-    _isProcessingBarcode = true; // Set flag to true
+    _isProcessingBarcode = true;
+
+    // remove the last scanned value and controller
+    _bottomSheetController.clearControllerValues();
 
     try {
       final barcode = barcodes.barcodes.firstOrNull;
@@ -148,6 +148,7 @@ class _ScanningScreenState extends State<ScanningScreen>
             setState(() {
               _lastScannedValue = null;
             });
+
             // Restart the camera when the bottom sheet is closed
             _controller.start();
             // Restart the animation

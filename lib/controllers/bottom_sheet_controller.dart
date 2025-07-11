@@ -44,6 +44,17 @@ class BottomSheetController extends GetxController {
     }
   }
 
+  // remove controller values after use
+  void clearControllerValues() {
+    redeemAmountController.clear();
+    orderId.value = null;
+    personNo.value = null;
+    tableNo.value = null;
+    personData.value = null;
+    redeemAmount.value = '';
+    redeemFreeDrinkAmount.value = '';
+  }
+
   // Fetches data for regular users (personNo != 0)
   Future<void> fetchUserData(String id, String count) async {
     try {
@@ -63,9 +74,7 @@ class BottomSheetController extends GetxController {
         final result = jsonDecode(response.body);
         final coverData = result['data']?[0];
         tableNo.value =
-            coverData?['table_no'] != null
-                ? coverData['table_no']
-                : null;
+            coverData?['table_no'] != null ? coverData['table_no'] : null;
 
         if (coverData?['person_wise_details'] != null) {
           final parsed = jsonDecode(coverData['person_wise_details']) as List;
